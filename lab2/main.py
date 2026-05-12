@@ -29,7 +29,7 @@ async def main():
     )
     await ipv8_instance.start()
 
-    print("IPv8 started")
+    # print("IPv8 started")
 
     await run_forever()
  

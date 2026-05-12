@@ -24,7 +24,7 @@ class ChallengeResponsePayload(VariablePayload):
 
 class SubmissionPayload(VariablePayload):
     msg_id = 5
-    format_list = ["varlenH", "q", "varlenH", "varlenH", "varlenH"]
+    format_list = ["varlenHutf8", "q", "varlenH", "varlenH", "varlenH"]
     names = ["group_id", "round_number", "sig1", "sig2", "sig3"]
 
 class RoundResultPayload(VariablePayload):
@@ -41,23 +41,8 @@ class GroupIdPayload(VariablePayload):
     format_list = ["varlenHutf8"]
     names = ["group_id"]
 
-
-class NoncePayload(VariablePayload):
-    """Round leader broadcasts the freshly received nonce to the other members."""
-    msg_id = 8
-    format_list = ["q", "varlenH"]
-    names = ["round_number", "nonce"]
-
-
 class SignaturePayload(VariablePayload):
     """Non-leader sends its signature on the nonce back to the round leader."""
     msg_id = 9
     format_list = ["q", "q", "varlenH"]
     names = ["round_number", "member_index", "signature"]
-
-
-class StartRoundPayload(VariablePayload):
-    """Current leader hands off to the next leader after a successful round."""
-    msg_id = 10
-    format_list = ["q"]
-    names = ["round_number"]
