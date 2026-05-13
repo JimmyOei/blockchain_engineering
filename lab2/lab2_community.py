@@ -24,7 +24,7 @@ MEMBER_COUNT = 3
 TOTAL_ROUNDS = 3
 
 # 0, 1, or 2. Unique per team member, determines which pubkey we expect us to have
-MY_MEMBER_ID = int(os.environ.get("MY_MEMBER_ID", "0"))
+MY_MEMBER_ID = int(os.environ.get("MY_MEMBER_ID", "2"))
 
 
 def _load_member_pubkeys() -> list[bytes]:
@@ -259,11 +259,6 @@ class Lab2Community(Community):
         if is_from_server:
             # print(f"✅  Round {round_number} successful: {payload.message}")
             self._broadcast(payload=payload)
-            
-            # Broadcast the result to other members
-            # for idx in range(MEMBER_COUNT):
-            #     if idx != self.member_id:
-            #         self._send_to_member(idx, payload)
         
         # Auto-advance if I'm the next leader
         next_round = round_number + 1
