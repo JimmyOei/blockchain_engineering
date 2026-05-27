@@ -71,7 +71,7 @@ def tx_hash(sender_key: bytes, data: bytes,
     Matches the spec's tx_hash formula exactly.
     """
     ts_bytes = struct.pack(">q", timestamp)   # signed 64-bit BE (wire type `q`)
-    return hashlib.sha256(sender_key + data + ts_bytes + signature).digest()
+    return sha256(sender_key + data + ts_bytes + signature)
 
 
 def txs_hash(tx_hashes: list[bytes]) -> bytes:
@@ -79,7 +79,7 @@ def txs_hash(tx_hashes: list[bytes]) -> bytes:
     Body commitment: SHA-256 over concatenated 32-byte tx hashes.
     Empty block → SHA-256(b"")  (NOT 32 zero bytes).
     """
-    return hashlib.sha256(b"".join(tx_hashes)).digest()   # sha256(b"") when list is empty
+    return sha256(b"".join(tx_hashes))        # sha256(b"") when list is empty
 
 
 # ---------------------------------------------------------------------------

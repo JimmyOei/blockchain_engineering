@@ -47,4 +47,3 @@ class Blockchain:
         if 0 <= height < len(self.chain):
             return self.chain[height]
         return None
-

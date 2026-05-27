@@ -56,6 +56,7 @@ class BlockchainCommunity(Community):
         self.add_message_handler(GetBlock, self.on_get_block)
 
     def started(self) -> None:
+        print("BlockchainCommunity started, waiting for peers...")
         self.network.add_peer_observer(self)
 
     # ── peer discovery ──────────────────────────────────────────────────────
@@ -87,6 +88,7 @@ class BlockchainCommunity(Community):
 
     @lazy_wrapper(SubmitTransaction)
     def on_submit_transaction(self, peer: PeerType, payload: SubmitTransaction) -> None:
+        print("Received SubmitTransaction request")
         transaction = Transaction(
             sender_key = payload.sender_key,
             data = payload.data,
@@ -116,6 +118,7 @@ class BlockchainCommunity(Community):
     
     @lazy_wrapper(GetChainHeight)
     def on_chain_height(self, peer: PeerType, payload: GetChainHeight) -> None:
+        print("Received GetChainHeight request")
         height = self.blockchain.get_chain_height()
         tip_hash = self.blockchain.get_block(height).block_hash
         bundle = ChainHeightResponse(
@@ -127,6 +130,7 @@ class BlockchainCommunity(Community):
 
     @lazy_wrapper(GetBlock)
     def on_get_block(self, peer: PeerType, payload: GetBlock) -> None:
+        print(f"Received GetBlock request for height {payload.height}")
         block = self.blockchain.get_block(payload.height)
         if block is None:
             print(f"⚠️  Received GetBlock for invalid height {payload.height}")
