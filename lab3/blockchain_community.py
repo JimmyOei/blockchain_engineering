@@ -2,6 +2,7 @@ import asyncio
 from ipv8.community import Community, CommunitySettings
 from ipv8.peer import Peer as PeerType
 from ipv8.lazy_community import lazy_wrapper
+from hashlib import sha256
 
 from message_payloads import (
     GetChainHeight,
@@ -77,7 +78,7 @@ class BlockchainCommunity(Community):
                 self.member_peers[idx] = peer
                 self._ready_peers.add(idx)
         
-        if self._all_teammembers_known() and self._server_peer is not None and not self._mining_enabled:
+        if self._all_teammembers_known() and self._server_peer is not None and self._mining_task is None:
             self._mining_task = asyncio.create_task(self._mining_loop())
             print("All team members and server discovered")
         
@@ -155,7 +156,7 @@ class BlockchainCommunity(Community):
     
     async def _mining_loop(self) -> None:
         """Mine only when there is at least one transaction in the mempool."""
-        print(f"[mining] Started (difficulty={self.blockchain.MINING_DIFFICULTY})")
+        print("[mining] Started")
 
         while True:
             if not self.blockchain.mempool:
@@ -166,7 +167,7 @@ class BlockchainCommunity(Community):
                 # Mining is CPU-bound, so run it in a worker thread.
                 new_block = await asyncio.get_running_loop().run_in_executor(
                     None,
-                    self.blockchain.mine_next_block,
+                    self.blockchain.add_block,
                 )
                 height = self.blockchain.get_chain_height()
                 print(

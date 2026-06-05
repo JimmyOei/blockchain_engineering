@@ -4,7 +4,7 @@ import struct
 import time
 from ipv8.keyvault.crypto import default_eccrypto
 from helpers import mine, compute_block_hash, compute_txs_hash, check_pow
-from constants import GENESIS_PREV_HASH, GENESIS_TIMESTAMP, GENESIS_DIFFICULTY, GENESIS_NONCE
+from constants import GENESIS_PREV_HASH, GENESIS_TIMESTAMP, GENESIS_DIFFICULTY, GENESIS_NONCE, DIFFICULTY
 
 @dataclass
 class Block:
@@ -75,7 +75,8 @@ class Blockchain:
             return self.chain[height]
         return None
     
-    def add_block(self, difficulty: int) -> Block:
+    def add_block(self) -> Block:
+        difficulty = DIFFICULTY
         prev_block = self.chain[-1]
         prev_hash = prev_block.block_hash
         tx_hashes = [tx.tx_hash for tx in self.mempool]
