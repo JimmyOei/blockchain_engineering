@@ -6,12 +6,6 @@ from ipv8.lazy_community import lazy_wrapper
 from message_payloads import (
     RegisterBlockchain,
     RegisterResponse,
-    GetChainHeight,
-    ChainHeightResponse,
-    GetBlock,
-    BlockResponse,
-    SubmitTransaction,
-    SubmitTransactionResponse
 )
 from constants import (
     REGISTRATION_COMMUNITY_ID,
@@ -76,20 +70,19 @@ class Lab3Community(Community):
     def on_peer_added(self, peer: PeerType) -> None:
         pk_bytes = peer.public_key.key_to_bin()
         pk_hex = pk_bytes.hex()
-        print(f"Found peer: {pk_hex[:40]}…")
         if pk_bytes == self._server_pubkey_bytes:
-            print(f"Found server peer in lab3 community: {peer}")
+            print(f"Found in lab3 community server peer: {peer}")
             self._server_peer = peer
 
         elif pk_bytes in self.member_pubkeys:
             idx = self.member_pubkeys.index(pk_bytes)
             if self.member_peers[idx] is None:
-                print(f"Found team member peer in lab3 community #{idx}: {peer}")
+                print(f"Found in lab3 community team member peer #{idx}: {peer}")
                 self.member_peers[idx] = peer
                 self._ready_peers.add(idx)
         
         if self._all_teammembers_known() and self._server_peer is not None:
-            print("All team members and server discovered in lab3 community")
+            print("All team members and server discovered")
             if self.member_id == 0 and not self._registration_sent:
                 self._registration_sent = True
                 self._register_blockchain()
