@@ -77,7 +77,7 @@ class BlockchainCommunity(Community):
         print("⚠️  Received message from unknown peer, ignoring")
         return False
     
-    def broadcast_block(self, new_block):
+    def broadcast_block(self, new_block: Block) -> None:
         bundle = BlockResponse(
             height = self.blockchain.get_chain_height(),
             prev_hash = new_block.prev_hash,
@@ -246,6 +246,8 @@ class BlockchainCommunity(Community):
             return
         
         self.blockchain.append_block(block)
+        print(f"Added block at height {payload.height} to the chain")
+        print(f"Chain height is now {self.blockchain.get_chain_height()}")
     
     @lazy_wrapper(GetMultipleBlocks)
     def on_get_multiple_blocks(self, peer: PeerType, payload: GetMultipleBlocks) -> None:
@@ -320,10 +322,6 @@ class BlockchainCommunity(Community):
         print("[mining] Started")
 
         while True:
-            if not self.blockchain.mempool:
-                await asyncio.sleep(0.2)
-                continue
-
             try:
                 # Mining is CPU-bound, so run it in a worker thread.
                 new_block = await asyncio.get_running_loop().run_in_executor(
@@ -333,7 +331,7 @@ class BlockchainCommunity(Community):
                 if new_block is None:
                     print("Mining failed, skipping block broadcast")
                     continue
-                await self.broadcast_block(new_block)
+                self.broadcast_block(new_block)
                 
                 height = self.blockchain.get_chain_height()
                 print(
@@ -345,7 +343,8 @@ class BlockchainCommunity(Community):
                 raise
             except Exception as e:
                 print(f"[mining] Error: {e}")
-                await asyncio.sleep(1)
+                
+            await asyncio.sleep(2)
                 
     def extract_ith_block_from_payload(self, payload, i: int) -> Block | None:
         # payload.block_count: int
