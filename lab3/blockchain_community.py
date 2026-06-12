@@ -306,6 +306,9 @@ class BlockchainCommunity(Community):
 
         for i in range(payload.num_blocks):
             block = self.extract_ith_block_from_payload(payload, i)
+            if block is None:
+                print(f"Failed to parse block index {i} from MultipleBlocksResponse")
+                return
 
             if not block.verify_block():
                 print(f"NOT GOOD, block wrong")
@@ -347,16 +350,16 @@ class BlockchainCommunity(Community):
             await asyncio.sleep(2)
                 
     def extract_ith_block_from_payload(self, payload, i: int) -> Block | None:
-        # payload.block_count: int
+        # payload.num_blocks: int
         # payload.blocks_data: bytes
         # Returns Block or None
-        if i < 0 or i >= payload.block_count:
+        if i < 0 or i >= payload.num_blocks:
             return None
 
         data = payload.blocks_data
         offset = 0
 
-        for idx in range(payload.block_count):
+        for idx in range(payload.num_blocks):
             # Fixed-size part: 32+32+8+8+8+32+2 = 122 bytes, plus fixed tx hash slots
             if len(data) - offset < 122 + MAX_TX_HASHES * 32:
                 return None
