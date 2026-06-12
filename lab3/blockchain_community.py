@@ -59,6 +59,9 @@ class BlockchainCommunity(Community):
         self.add_message_handler(SubmitTransaction, self.on_submit_transaction)
         self.add_message_handler(GetChainHeight, self.on_chain_height)
         self.add_message_handler(GetBlock, self.on_get_block)
+        self.add_message_handler(BlockResponse, self.on_block_response)
+        self.add_message_handler(GetMultipleBlocks, self.on_get_multiple_blocks)
+        self.add_message_handler(MultipleBlocksResponse, self.on_multiple_blocks_response)
 
     def started(self) -> None:
         self.network.add_peer_observer(self)
@@ -76,7 +79,7 @@ class BlockchainCommunity(Community):
     
     def broadcast_block(self, new_block):
         bundle = BlockResponse(
-            height = self.get_chain_height(),
+            height = self.blockchain.get_chain_height(),
             prev_hash = new_block.prev_hash,
             txs_hash = new_block.txs_hash,
             timestamp = new_block.timestamp,
@@ -87,7 +90,8 @@ class BlockchainCommunity(Community):
         )
 
         for peer in self.member_peers:
-            self.ez_send(peer, bundle)
+            if peer is not None and peer != self.my_peer:
+                self.ez_send(peer, bundle)
 
     # ── peer discovery ──────────────────────────────────────────────────────
     
@@ -122,9 +126,9 @@ class BlockchainCommunity(Community):
     @lazy_wrapper(SubmitTransaction)
     def on_submit_transaction(self, peer: PeerType, payload: SubmitTransaction) -> None:
         '''Handle a SubmitTransaction message from server. Validate the transaction and add it to the mempool if valid.'''
-        print("Received transaction")
+        print("RECEIVED SUBMIT TRANSACTION")
         
-        if not self.from_server_or_teammate():
+        if not self.from_server_or_teammate(peer):
             return
 
         transaction = Transaction(
