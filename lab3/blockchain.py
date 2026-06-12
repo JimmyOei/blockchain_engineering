@@ -3,7 +3,7 @@ from hashlib import sha256
 import struct
 import time
 from ipv8.keyvault.crypto import default_eccrypto
-from constants import DIFFICULTY, GENESIS_PREV_HASH, GENESIS_TIMESTAMP, GENESIS_DIFFICULTY, GENESIS_NONCE
+from constants import DIFFICULTY, GENESIS_PREV_HASH, GENESIS_TIMESTAMP, GENESIS_DIFFICULTY, GENESIS_NONCE, MAX_TX_HASHES
 from helpers import mine, compute_block_hash, compute_txs_hash, check_pow
 
 # ── Block  ─────────────────────────────────────────────────────────────
@@ -73,19 +73,29 @@ class Blockchain:
     def get_chain_height(self) -> int:
         return len(self.chain) - 1  # genesis block is height 0
     
+    def get_chain_tip(self) -> Block:
+        return self.chain[-1]
+    
     def get_block(self, height: int) -> Block | None:
         if 0 <= height < len(self.chain):
             return self.chain[height]
         return None
     
-    def append_block(self, block: Block):
+    def append_block(self, block: Block) -> bool:
+        if self.get_chain_tip().block_hash != block.prev_hash:
+            return False
+        
         self.chain.append(block)
+        return True
     
-    def mine_block(self) -> Block:
+    def mine_block(self) -> Block | None:
         difficulty = DIFFICULTY
-        prev_block = self.chain[-1]
+        prev_block = self.get_chain_tip()
         prev_hash = prev_block.block_hash
-        tx_hashes = [tx.tx_hash for tx in self.mempool]
+        transactions = self.mempool[:MAX_TX_HASHES]
+        tx_hashes = [tx.tx_hash for tx in transactions]
+        if len(self.mempool) > MAX_TX_HASHES:
+            print(f"Mining block with max {MAX_TX_HASHES} tx hashes; {len(self.mempool) - MAX_TX_HASHES} txs remain in mempool")
         del self.mempool[:len(tx_hashes)]
         timestamp = int(time.time())
 
@@ -106,7 +116,10 @@ class Blockchain:
         
         # Add to chain and clear mempool
         # TODO niet meteen block toevoegen maar eerst checken
-        self.chain.append(new_block)
+        if not self.append_block(new_block):
+            print("Failed to append mined block to the chain")
+            self.mempool.extend(transactions)
+            return None
 
         print(f"Mined new block at height {self.get_chain_height()} with {len(tx_hashes)} transactions")
         
