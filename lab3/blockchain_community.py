@@ -178,7 +178,7 @@ class BlockchainCommunity(Community):
 
     @lazy_wrapper(GetBlock)
     def on_get_block(self, peer: PeerType, payload: GetBlock) -> None:
-        print(f"Received on get block with height {payload.height}")
+        # print(f"Received on get block with height {payload.height}")
         
         if not self.from_server_or_teammate(peer):
             return
@@ -245,7 +245,9 @@ class BlockchainCommunity(Community):
             self.ez_send(peer, bundle)
             return
         
-        self.blockchain.append_block(block)
+        if not self.blockchain.append_block(block):
+            # TODO sync strategy
+            print(f"Failed to append block at height {payload.height}, maybe due to mismatched prev_hash?")
         print(f"Added block at height {payload.height} to the chain")
         print(f"Chain height is now {self.blockchain.get_chain_height()}")
     
@@ -318,7 +320,9 @@ class BlockchainCommunity(Community):
                 print(f"Block at height {payload.start_height + i} already exists")
                 return
             
-            self.blockchain.append_block(block)
+            if not self.blockchain.append_block(block):
+                # TODO sync strategy
+                print(f"Failed to append block at height {payload.start_height + i}, maybe due to mismatched prev_hash?")
 
     async def _mining_loop(self) -> None:
         """Mine only when there is at least one transaction in the mempool."""
@@ -347,7 +351,7 @@ class BlockchainCommunity(Community):
             except Exception as e:
                 print(f"[mining] Error: {e}")
                 
-            await asyncio.sleep(2)
+            await asyncio.sleep(15)
                 
     def extract_ith_block_from_payload(self, payload, i: int) -> Block | None:
         # payload.num_blocks: int
