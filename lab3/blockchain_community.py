@@ -1,4 +1,5 @@
 import asyncio
+from random import random
 import time
 from ipv8.community import Community, CommunitySettings
 from ipv8.peer import Peer as PeerType
@@ -27,6 +28,7 @@ from constants import (
     PARTITION_TEST_ENABLED,
     PARTITION_START_AFTER_SECONDS,
     PARTITION_DURATION_SECONDS,
+    MAX_SLEEP_MINING_LOOP,
     load_member_pubkeys,
 )
 
@@ -439,4 +441,4 @@ class BlockchainCommunity(Community):
             except Exception as e:
                 print(f"[mining] Error: {e}")
                 
-            await asyncio.sleep(15)
+            await asyncio.sleep(random.uniform(1, MAX_SLEEP_MINING_LOOP))

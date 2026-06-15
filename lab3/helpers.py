@@ -13,6 +13,7 @@ Block header layout (84 bytes, all big-endian):
 """
 
 from hashlib import sha256
+import random
 import struct
 import time
 from typing import TYPE_CHECKING
@@ -70,12 +71,12 @@ def mine(prev_hash: bytes, tx_hashes: list[bytes],
         timestamp = int(time.time())
 
     commitment = compute_txs_hash(tx_hashes)
-    nonce = 0
+    nonce = random.randint(0, 2**64 - 1)
     while True:
         h = compute_block_hash(prev_hash, commitment, timestamp, difficulty, nonce)
         if check_pow(h, difficulty):
             return nonce
-        nonce += 1
+        nonce += (nonce + 1) % (2**64)   # wrap around if we exceed uint64 to prevent overflow
 
 def extract_ith_block_from_payload(payload, i: int) -> "Block | None":
         # payload.num_blocks: int
