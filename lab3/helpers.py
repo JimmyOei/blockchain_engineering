@@ -18,22 +18,10 @@ import struct
 import time
 from typing import TYPE_CHECKING
 
-from constants import MAX_TX_HASHES
+from constants import MAX_TX_HASHES, NONCE_SPACE
 
 if TYPE_CHECKING:
     from blockchain import Block
-
-
-# ---------------------------------------------------------------------------
-# Constants
-# ---------------------------------------------------------------------------
-
-HEADER_FORMAT = ">32s32sQIQ"   # big-endian: 32s 32s uint64 uint32 uint64
-HEADER_SIZE   = struct.calcsize(HEADER_FORMAT)   # must be 84
-assert HEADER_SIZE == 84, f"Header size is {HEADER_SIZE}, expected 84"
-
-ZERO_HASH = b"\x00" * 32      # used as prev_hash of the genesis block
-
 
 # ---------------------------------------------------------------------------
 # Low-level helpers
@@ -71,12 +59,12 @@ def mine(prev_hash: bytes, tx_hashes: list[bytes],
         timestamp = int(time.time())
 
     commitment = compute_txs_hash(tx_hashes)
-    nonce = random.randint(0, 2**64 - 1)
+    nonce = random.randint(0, NONCE_SPACE - 1)
     while True:
         h = compute_block_hash(prev_hash, commitment, timestamp, difficulty, nonce)
         if check_pow(h, difficulty):
             return nonce
-        nonce += (nonce + 1) % (2**64)   # wrap around if we exceed uint64 to prevent overflow
+        nonce = (nonce + 1) % NONCE_SPACE
 
 def extract_ith_block_from_payload(payload, i: int) -> "Block | None":
         # payload.num_blocks: int

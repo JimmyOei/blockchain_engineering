@@ -1,5 +1,5 @@
 import asyncio
-from random import random
+import random
 import time
 from ipv8.community import Community, CommunitySettings
 from ipv8.peer import Peer as PeerType
