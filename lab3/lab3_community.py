@@ -6,6 +6,12 @@ from ipv8.lazy_community import lazy_wrapper
 from message_payloads import (
     RegisterBlockchain,
     RegisterResponse,
+    GetChainHeight,
+    ChainHeightResponse,
+    GetBlock,
+    BlockResponse,
+    SubmitTransaction,
+    SubmitTransactionResponse
 )
 from constants import (
     REGISTRATION_COMMUNITY_ID,
@@ -23,20 +29,26 @@ class Lab3Community(Community):
 
     def __init__(self, settings: CommunitySettings) -> None:
         super().__init__(settings)
-        self.member_id: int = MY_MEMBER_ID
         self.member_pubkeys: list[bytes] = load_member_pubkeys()
+
+        my_pk = self.my_peer.public_key.key_to_bin()
+        if my_pk not in self.member_pubkeys:
+            raise RuntimeError(
+                "My IPv8 key is not one of the registered team public keys. "
+                "Check your key files and private key selection."
+            )
+
+        detected_member_id = self.member_pubkeys.index(my_pk)
+        if MY_MEMBER_ID != detected_member_id:
+            print(
+                f"⚠️  MY_MEMBER_ID={MY_MEMBER_ID} does not match loaded key; "
+                f"using detected member_id={detected_member_id}."
+            )
+
+        self.member_id: int = detected_member_id
         self.member_peers: list[PeerType | None] = [None] * MEMBER_COUNT
         self._ready_peers: set[int] = {self.member_id}
 
-        # Sanity-check: my IPv8 key MUST match the pubkey at MY_MEMBER_ID,
-        # otherwise the server will reject every signed packet.
-        my_pk = self.my_peer.public_key.key_to_bin()
-        expected = self.member_pubkeys[self.member_id]
-        if my_pk != expected:
-            raise RuntimeError(
-                f"MY_MEMBER_ID={self.member_id} but my_peer pubkey does not match "
-                f"the expected pubkey for that member ID."
-            )
         # I already know my own peer object.
         self.member_peers[self.member_id] = self.my_peer
 
@@ -70,19 +82,20 @@ class Lab3Community(Community):
     def on_peer_added(self, peer: PeerType) -> None:
         pk_bytes = peer.public_key.key_to_bin()
         pk_hex = pk_bytes.hex()
+        # print(f"Found peer: {pk_hex[:40]}…")
         if pk_bytes == self._server_pubkey_bytes:
-            print(f"Found in lab3 community server peer: {peer}")
+            print(f"Found server peer in lab3 community: {peer}")
             self._server_peer = peer
 
         elif pk_bytes in self.member_pubkeys:
             idx = self.member_pubkeys.index(pk_bytes)
             if self.member_peers[idx] is None:
-                print(f"Found in lab3 community team member peer #{idx}: {peer}")
+                print(f"Found team member peer in lab3 community #{idx}: {peer}")
                 self.member_peers[idx] = peer
                 self._ready_peers.add(idx)
         
         if self._all_teammembers_known() and self._server_peer is not None:
-            print("All team members and server discovered")
+            print("All team members and server discovered in lab3 community")
             if self.member_id == 0 and not self._registration_sent:
                 self._registration_sent = True
                 self._register_blockchain()
