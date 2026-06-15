@@ -104,7 +104,7 @@ class Blockchain:
         try:
             snapshot_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
             self.last_dumped_height = height
-            print(f"[DUMP] Wrote blockchain snapshot: {snapshot_path}")
+            print(f"[DUMP] Wrote blockchain snapshot (height={height})")
         except OSError as e:
             print(f"[DUMP] Failed to write blockchain snapshot: {e}")
         
